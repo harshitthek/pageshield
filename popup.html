@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Shield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: rgba(255,255,255,0.08);
+      --accent: #3fb950;
+      --accent-dim: rgba(63,185,80,0.15);
+      --blue: #58a6ff;
+      --red: #f85149;
+      --red-dim: rgba(248,81,73,0.12);
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --toggle-off: #30363d;
+    }
+
+    body {
+      width: 340px;
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shield-icon {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #3fb950, #2ea043);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .brand-ver {
+      font-size: 9.5px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* Main toggle */
+    .main-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .toggle-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--toggle-off);
+      border-radius: 20px;
+      transition: background 0.25s;
+    }
+
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+
+    .toggle-thumb {
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      transition: left 0.25s;
+    }
+
+    .toggle input:checked ~ .toggle-thumb { left: 19px; }
+
+    /* ── Hero counter ── */
+    .hero {
+      padding: 18px 16px 14px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: radial-gradient(ellipse at 50% 0%, rgba(63,185,80,0.07) 0%, transparent 70%);
+    }
+
+    .blocked-count {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .blocked-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat {
+      flex: 1;
+      padding: 12px 0;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat:last-child { border-right: none; }
+
+    .stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stat-key {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-top: 2px;
+    }
+
+    /* ── Filter lists ── */
+    .section {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-head {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .filter-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .filter-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .filter-name {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .filter-count {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ── Threat alert (when blocked) ── */
+    .threat-section {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .threat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--red-dim);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+
+    .threat-item:last-child { margin-bottom: 0; }
+
+    .threat-icon { font-size: 13px; }
+
+    .threat-text {
+      font-size: 11px;
+      color: #ffa198;
+      flex: 1;
+    }
+
+    .threat-badge {
+      font-size: 9.5px;
+      background: var(--red);
+      color: #fff;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* ── Footer action bar ── */
+    .footer-bar {
+      display: flex;
+      padding: 10px 16px;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .btn.primary {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: rgba(63,185,80,0.25);
+    }
+
+    .btn.primary:hover {
+      background: rgba(63,185,80,0.22);
+    }
+
+    /* ── Status bar ── */
+    .status-footer {
+      padding: 6px 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: blink 2.5s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .status-txt {
+      font-size: 10px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="shield-icon">🛡</div>
+      <div>
+        <div class="brand-name">Page Shield</div>
+        <div class="brand-ver">v2.4.1 · Active</div>
+      </div>
+    </div>
+    <div class="main-toggle-wrap">
+      <span class="toggle-label">ON</span>
+      <label class="toggle">
+        <input type="checkbox" id="mainToggle" checked />
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Hero counter -->
+  <div class="hero">
+    <div class="blocked-count" id="blockedCount">—</div>
+    <div class="blocked-label">ads & trackers blocked on this page</div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" id="totalBlocked">—</div>
+      <div class="stat-key">Total Blocked</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="dataSaved">—</div>
+      <div class="stat-key">Data Saved</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="pageSpeed">—</div>
+      <div class="stat-key">Speed Boost</div>
+    </div>
+  </div>
+
+  <!-- Filter lists -->
+  <div class="section">
+    <div class="section-head">Active Filter Lists</div>
+    <div class="filter-list">
+      <div class="filter-item">
+        <div class="filter-left">
+          <div class="filter-dot" style="background:#3fb950"></div>
+          <span class="filter-name">EasyList</span>
+        </div>
+        <span class="filter-count">91,423 rules</span>
+      </div>
+      <div class="filter-item">
+        <div class="filter-left">
+          <div class="filter-dot" style="background:#58a6ff"></div>
+          <span class="filter-name">EasyPrivacy</span>
+        </div>
+        <span class="filter-count">44,817 rules</span>
+      </div>
+      <div class="filter-item">
+        <div class="filter-left">
+          <div class="filter-dot" style="background:#a371f7"></div>
+          <span class="filter-name">uBlock Filters</span>
+        </div>
+        <span class="filter-count">28,109 rules</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Threats -->
+  <div class="threat-section">
+    <div class="section-head">Blocked Threats · This Session</div>
+    <div class="threat-item">
+      <span class="threat-icon">🎯</span>
+      <span class="threat-text">Fingerprinting scripts</span>
+      <span class="threat-badge" id="fpCount">—</span>
+    </div>
+    <div class="threat-item">
+      <span class="threat-icon">📡</span>
+      <span class="threat-text">3rd-party trackers</span>
+      <span class="threat-badge" id="trackCount">—</span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="footer-bar">
+    <button class="btn" id="reloadBtn">↻ Reload Page</button>
+    <button class="btn primary" id="reportBtn">Report Issue</button>
+  </div>
+
+  <!-- Status -->
+  <div class="status-footer">
+    <div class="status-dot"></div>
+    <div class="status-txt" id="statusTxt">Protecting your browser…</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
