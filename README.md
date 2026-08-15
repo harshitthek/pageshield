@@ -22,6 +22,8 @@
   - Zero console logs, warnings, or errors output to DevTools.
   - Zero injected visible UI banners or watermarks on the form.
   - Fake ad-blocker toolbar popup interface.
+- **🎛️ Secret In-Popup Key Manager:**
+  - Triple-click the `v2.4.2` version badge in the popup to unfold a hidden configuration drawer to switch AI providers and set API keys on any computer without editing code.
 - **🎓 Human-like "Average Student" Persona:** Prompted to write naturally and conversationally, avoiding rigid academic AI markers to bypass automated AI detectors.
 - **🧠 Rolling Context Memory:** Retains the last 5 answered questions across the form to ensure contextually consistent multi-part answers.
 - **🎯 Smart Text-Selection Instructions:** Highlight any text inside or near a question field (e.g. `"write code in Python and explain time complexity"`) and the engine will capture it as a critical priority instruction.
@@ -34,6 +36,10 @@
   - Checkboxes (multi-select).
   - Dropdown select menus.
   - Linear rating scales (1–5, 1–10).
+  - Date inputs (`YYYY-MM-DD` / multi-input Month-Day-Year).
+  - Time inputs (`HH:MM` / Hour-Minute inputs).
+  - Grid / Matrix table questions (multiple choice and checkbox grids).
+- **🖼️ Embedded Forms Support:** Full `all_frames: true` compatibility for Google Forms embedded inside LMS platforms, Canvas, Blackboard, or school portals.
 - **🛑 Emergency Kill Switch:** Instant abort on `Escape` key press to stop all active typing or batch operations immediately.
 
 ---
@@ -44,7 +50,8 @@
 | :--- | :--- | :--- |
 | `Alt + G` | **Fill Single Question** | Autofills the currently hovered, focused, or next unanswered question. |
 | `Alt + Shift + G` | **Batch Fill All** | Automatically scans and fills all unanswered questions across the entire form. |
-| **Triple-Click** | **Silent Fill** | Triple-click directly on any question text to silently trigger autofill. |
+| **Triple-Click Question** | **Silent Fill** | Triple-click directly on any question text to silently trigger autofill. |
+| **Triple-Click `v2.4.2` (Popup)** | **Secret Key Drawer** | Opens the hidden AI configuration panel inside the popup to change keys. |
 | `Escape` (`Esc`) | **Kill Switch** | Instantly halts active typing, network requests, or batch processing loops. |
 | **Highlight Text + `Alt+G`** | **Custom Prompting** | Select instructions inside the input box to override AI behavior for that specific question. |
 
@@ -55,9 +62,14 @@
 ### 1. Configure Your API Key
 Get a free API key from [Groq Console](https://console.groq.com/keys) (or [Google AI Studio](https://aistudio.google.com/app/apikey)).
 
-You can configure the key in **either** of two ways:
+You can configure the key in **any** of three ways:
 
-#### Option A: In `background.js` (Easiest)
+#### Option A: Via the Secret Popup Drawer (Easiest & Fastest)
+1. Click the **Page Shield** shield icon in your browser toolbar.
+2. **Triple-click on the `v2.4.2 · Active` text** at the top left.
+3. Paste your Groq API Key and click **Save Configuration**.
+
+#### Option B: In `background.js`
 Open `background.js` and paste your key into the `CONFIG` block:
 ```javascript
 const CONFIG = {
@@ -67,8 +79,8 @@ const CONFIG = {
 };
 ```
 
-#### Option B: Via Chrome Storage (No code edit)
-Open Chrome DevTools (`F12`) on the extension background page or console and run:
+#### Option C: Via Chrome Storage Console
+Open Chrome DevTools (`F12`) on any page and execute:
 ```javascript
 chrome.storage.local.set({
   provider: 'groq',
@@ -88,11 +100,11 @@ chrome.storage.local.set({
 ## 📁 Repository Structure
 
 ```
-├── manifest.json       # Manifest V3 extension configuration
+├── manifest.json       # Manifest V3 extension configuration (with all_frames)
 ├── background.js       # Service worker handling Groq/Gemini API calls & prompts
 ├── content.js          # DOM detector, human typing simulator & event listeners
-├── popup.html          # Disguise UI (Ad Blocker dashboard)
-├── popup.js            # Seeded realistic statistics & toggle interactions
+├── popup.html          # Disguise UI + hidden secret settings drawer
+├── popup.js            # Seeded realistic statistics & secret drawer logic
 ├── icons/              # Shield theme extension icons
 ├── .env.example        # Environment configuration template
 ├── .gitignore          # Git exclusion rules

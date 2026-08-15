@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Page Shield",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "Blocks intrusive ads, trackers, and speeds up page loading.",
   "permissions": [
     "storage",
@@ -9,7 +9,7 @@
     "tabs"
   ],
   "host_permissions": [
-    "https://docs.google.com/forms/*",
+    "*://docs.google.com/forms/*",
     "https://generativelanguage.googleapis.com/*",
     "https://api.groq.com/*"
   ],
@@ -18,9 +18,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://docs.google.com/forms/*"],
+      "matches": ["*://docs.google.com/forms/*"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
   "action": {

@@ -9,15 +9,24 @@
   ```javascript
   const seed = today.getDate() * 7 + today.getMonth() * 31;
   ```
+- **Secret Drawer:** Triple-clicking `.brand-ver` (`v2.4.2 · Active`) reveals the hidden AI Engine Settings panel to set Groq/Gemini keys without code editing.
 
 ### 2. Autofill Engine (`content.js`)
-- Runs in isolated world at `document_idle` on `https://docs.google.com/forms/*`.
-- **Question Containers:** Multi-signal detection checking `data-params`, `data-item-id`, and structural heading/input elements.
+- Runs in isolated world at `document_idle` on `*://docs.google.com/forms/*` (with `all_frames: true` for embedded LMS forms).
+- **Question Containers:** Multi-signal detection checking `data-params`, `data-item-id`, `role="radiogroup"`, `role="group"`, and structural heading/input elements.
 - **Smart Chunk Typing:**
   - Standard short text: Char-by-char with 28–75ms delay.
   - Long paragraphs/code (>150 chars): 15–40 char chunks with 8–25ms delay.
+- **Universal Form Fields:**
+  - Short text & Paragraph textarea.
+  - Radio & Checkboxes (single/multi-select).
+  - Dropdown comboboxes.
+  - Linear rating scales.
+  - Date inputs (`YYYY-MM-DD` / Month-Day-Year).
+  - Time inputs (`HH:MM` / Hour-Minute).
+  - Grid / Matrix table row questions.
 - **Snapshot Selection Capture:**
-  - Before starting batch fill (`Alt+Shift+G`), snapshots all user-highlighted instructions to avoid losing them on focus shift.
+  - Before starting batch fill (`Alt+Shift+G`), snapshots all user-highlighted instructions across all questions to avoid losing them on focus shift.
 
 ### 3. Service Worker & AI Pipelines (`background.js`)
 - **Primary Model:** `llama-3.3-70b-versatile` on Groq (fast, generous free tier rate limits).
@@ -33,7 +42,8 @@
 | :--- | :--- |
 | `Alt + G` | Fill hovered or currently focused question |
 | `Alt + Shift + G` | Batch-fill all remaining unanswered questions |
-| `Triple-Click` | Silently autofill clicked question |
+| `Triple-Click Question` | Silently autofill clicked question |
+| `Triple-Click v2.4.2` | Open hidden AI settings drawer in popup |
 | `Escape` | Instant emergency abort / kill switch |
 | `Highlight + Alt + G` | Custom prompt mode (e.g., specific language, tone, length) |
 
@@ -41,7 +51,7 @@
 
 ## 🔑 Setting API Key in Browser Console
 
-If you don't want to edit `background.js`, open DevTools on any page and execute:
+If you don't want to use the popup drawer or edit `background.js`, run in DevTools:
 ```javascript
 chrome.storage.local.set({
   provider: 'groq',

@@ -29,7 +29,7 @@
       background: var(--bg);
       font-family: 'Inter', sans-serif;
       color: var(--text);
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     /* ── Top bar ── */
@@ -68,6 +68,8 @@
       font-size: 9.5px;
       color: var(--muted);
       margin-top: 1px;
+      cursor: pointer;
+      user-select: none;
     }
 
     /* Main toggle */
@@ -113,6 +115,87 @@
     }
 
     .toggle input:checked ~ .toggle-thumb { left: 19px; }
+
+    /* ── Secret Config Drawer ── */
+    #secretDrawer {
+      display: none;
+      padding: 12px 16px;
+      background: #11161d;
+      border-bottom: 1px solid var(--border);
+      animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .drawer-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-field {
+      margin-bottom: 8px;
+    }
+
+    .drawer-label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+      display: block;
+    }
+
+    .drawer-input, .drawer-select {
+      width: 100%;
+      padding: 6px 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .drawer-input:focus, .drawer-select:focus {
+      border-color: var(--blue);
+    }
+
+    .drawer-btn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .drawer-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: var(--accent);
+      color: #0d1117;
+      transition: opacity 0.15s;
+    }
+
+    .drawer-btn:hover { opacity: 0.9; }
+
+    .drawer-msg {
+      font-size: 10px;
+      color: var(--accent);
+      display: none;
+    }
 
     /* ── Hero counter ── */
     .hero {
@@ -328,7 +411,7 @@
       <div class="shield-icon">🛡</div>
       <div>
         <div class="brand-name">Page Shield</div>
-        <div class="brand-ver">v2.4.1 · Active</div>
+        <div class="brand-ver" id="brandVer" title="Version">v2.4.2 · Active</div>
       </div>
     </div>
     <div class="main-toggle-wrap">
@@ -338,6 +421,32 @@
         <div class="toggle-track"></div>
         <div class="toggle-thumb"></div>
       </label>
+    </div>
+  </div>
+
+  <!-- Secret Config Drawer (Triple Click Version to Reveal) -->
+  <div id="secretDrawer">
+    <div class="drawer-title">
+      <span>⚙️ AI Engine Settings</span>
+      <span class="drawer-msg" id="drawerMsg">✓ Saved</span>
+    </div>
+    <div class="drawer-field">
+      <label class="drawer-label">AI Provider</label>
+      <select class="drawer-select" id="providerSelect">
+        <option value="groq">Groq (Llama 3.3 70B - Recommended)</option>
+        <option value="gemini">Google Gemini (Flash Lite)</option>
+      </select>
+    </div>
+    <div class="drawer-field">
+      <label class="drawer-label">Groq API Key</label>
+      <input type="password" class="drawer-input" id="groqKeyInput" placeholder="gsk_..." autocomplete="off" />
+    </div>
+    <div class="drawer-field">
+      <label class="drawer-label">Gemini API Key</label>
+      <input type="password" class="drawer-input" id="geminiKeyInput" placeholder="AIzaSy..." autocomplete="off" />
+    </div>
+    <div class="drawer-btn-row">
+      <button class="drawer-btn" id="saveKeyBtn">Save Configuration</button>
     </div>
   </div>
 

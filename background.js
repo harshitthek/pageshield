@@ -162,6 +162,16 @@ If code is asked for, provide complete working code. If an explanation is asked,
 Output ONLY the answer. No preamble like "Here is". Start directly with the content.`;
   }
 
+  if (questionType === 'date') {
+    return `${contextStr}Question: "${questionText}"
+Reply with a realistic date in YYYY-MM-DD format (e.g. 2026-08-16). Output ONLY the date string, nothing else.`;
+  }
+
+  if (questionType === 'time') {
+    return `${contextStr}Question: "${questionText}"
+Reply with a realistic time in HH:MM format (e.g. 10:30). Output ONLY the time string, nothing else.`;
+  }
+
   return `${contextStr}Answer this question briefly and naturally (like an average student): "${questionText}"
 Output ONLY the answer. No preamble, no meta-commentary.`;
 }

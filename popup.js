@@ -1,5 +1,4 @@
-// popup.js — Page Shield (fake ad-blocker UI)
-// All numbers are plausible but randomly seeded — looks real, means nothing
+// popup.js — Page Shield (fake ad-blocker UI + secret config drawer)
 
 (function () {
   // ── Seed random-but-stable session numbers using date ──────────────────────
@@ -39,16 +38,23 @@
 
   // ── Populate UI ────────────────────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
-    const blockedEl    = document.getElementById('blockedCount');
-    const totalEl      = document.getElementById('totalBlocked');
-    const dataSavedEl  = document.getElementById('dataSaved');
-    const speedEl      = document.getElementById('pageSpeed');
-    const fpEl         = document.getElementById('fpCount');
-    const trackEl      = document.getElementById('trackCount');
-    const statusTxt    = document.getElementById('statusTxt');
-    const mainToggle   = document.getElementById('mainToggle');
-    const reloadBtn    = document.getElementById('reloadBtn');
-    const reportBtn    = document.getElementById('reportBtn');
+    const blockedEl      = document.getElementById('blockedCount');
+    const totalEl        = document.getElementById('totalBlocked');
+    const dataSavedEl    = document.getElementById('dataSaved');
+    const speedEl        = document.getElementById('pageSpeed');
+    const fpEl           = document.getElementById('fpCount');
+    const trackEl        = document.getElementById('trackCount');
+    const statusTxt      = document.getElementById('statusTxt');
+    const mainToggle     = document.getElementById('mainToggle');
+    const reloadBtn      = document.getElementById('reloadBtn');
+    const reportBtn      = document.getElementById('reportBtn');
+    const brandVer       = document.getElementById('brandVer');
+    const secretDrawer   = document.getElementById('secretDrawer');
+    const providerSelect = document.getElementById('providerSelect');
+    const groqKeyInput   = document.getElementById('groqKeyInput');
+    const geminiKeyInput = document.getElementById('geminiKeyInput');
+    const saveKeyBtn     = document.getElementById('saveKeyBtn');
+    const drawerMsg      = document.getElementById('drawerMsg');
 
     // Animate numbers in
     setTimeout(() => {
@@ -69,11 +75,10 @@
     ];
     statusTxt.textContent = statuses[seed % statuses.length];
 
-    // Toggle handler — just updates label, no real action
+    // Toggle handler — just updates label
     mainToggle.addEventListener('change', () => {
       const isOn = mainToggle.checked;
-      document.querySelector('.brand-ver').textContent =
-        'v2.4.1 · ' + (isOn ? 'Active' : 'Paused');
+      brandVer.textContent = 'v2.4.2 · ' + (isOn ? 'Active' : 'Paused');
       statusTxt.textContent = isOn ? 'Protection enabled' : 'Protection paused for this tab';
     });
 
@@ -84,9 +89,53 @@
       });
     });
 
-    // Report button — opens a generic feedback URL (looks legit)
+    // Report button
     reportBtn.addEventListener('click', () => {
       chrome.tabs.create({ url: 'https://github.com' });
+    });
+
+    // ── Secret Drawer Toggle (Triple-Click Version) ──────────────────────────
+    let clickCount = 0;
+    let clickTimer = null;
+
+    brandVer.addEventListener('click', () => {
+      clickCount++;
+      if (clickTimer) clearTimeout(clickTimer);
+      
+      if (clickCount >= 3) {
+        clickCount = 0;
+        const isHidden = secretDrawer.style.display === 'none' || !secretDrawer.style.display;
+        secretDrawer.style.display = isHidden ? 'block' : 'none';
+        
+        if (isHidden) {
+          // Load stored config values
+          chrome.storage.local.get(['provider', 'groqApiKey', 'geminiApiKey'], (data) => {
+            if (data.provider) providerSelect.value = data.provider;
+            if (data.groqApiKey) groqKeyInput.value = data.groqApiKey;
+            if (data.geminiApiKey) geminiKeyInput.value = data.geminiApiKey;
+          });
+        }
+      } else {
+        clickTimer = setTimeout(() => { clickCount = 0; }, 400);
+      }
+    });
+
+    // Save Secret Config
+    saveKeyBtn.addEventListener('click', () => {
+      const provider     = providerSelect.value;
+      const groqApiKey   = groqKeyInput.value.trim();
+      const geminiApiKey = geminiKeyInput.value.trim();
+
+      chrome.storage.local.set({
+        provider,
+        groqApiKey,
+        geminiApiKey
+      }, () => {
+        drawerMsg.style.display = 'inline';
+        setTimeout(() => {
+          drawerMsg.style.display = 'none';
+        }, 2000);
+      });
     });
   });
 })();

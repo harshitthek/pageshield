@@ -111,21 +111,23 @@
     if (!node || !node.tagName) return false;
     if (node.hasAttribute('data-params')) return true;
     if (node.hasAttribute('data-item-id')) return true;
+    if (node.getAttribute('role') === 'radiogroup' || node.getAttribute('role') === 'group') return true;
 
     const hasHeading =
       !!node.querySelector('[role="heading"]') ||
-      !!node.querySelector('h1,h2,h3,h4');
+      !!node.querySelector('h1,h2,h3,h4') ||
+      !!node.querySelector('[role="rowheader"]');
     if (!hasHeading) return false;
 
     const hasInput = !!node.querySelector(
-      'input[type="text"], textarea, ' +
+      'input[type="text"], input[type="date"], input[type="time"], textarea, ' +
       '[role="radio"], [role="checkbox"], ' +
       '[role="radiogroup"], [role="combobox"], [role="listbox"]'
     );
     if (!hasInput) return false;
 
     const r = node.getBoundingClientRect();
-    return r.width > 100 && r.height > 40 && r.height < 800;
+    return r.width > 50 && r.height > 20 && r.height < 800;
   }
 
   function getAllQuestionContainers() {
@@ -138,7 +140,7 @@
     document.querySelectorAll('[data-params]').forEach(add);
     document.querySelectorAll('[data-item-id]').forEach(add);
     document.querySelectorAll(
-      'input[type="text"], textarea, [role="radiogroup"], [role="group"]'
+      'input[type="text"], input[type="date"], input[type="time"], textarea, [role="radiogroup"], [role="group"]'
     ).forEach(el => add(el));
     return results;
   }
@@ -266,21 +268,48 @@
   }
 
   function extractQuestion(container) {
-    const titleEl = container.querySelector(
+    let titleEl = container.querySelector(
       '[role="heading"], .freebirdFormviewerViewItemsItemItemTitle, .M7eMe, .HoXoMd'
     );
-    const questionText = titleEl?.textContent?.trim();
+    let questionText = titleEl?.textContent?.trim();
+
+    // Grid / Matrix row fallback: Check if this container is a row inside a grid table
+    if (!questionText) {
+      const parentContainer = container.closest('[data-params], [data-item-id], .freebirdFormviewerViewItemsGridGrid');
+      const parentTitle = parentContainer?.querySelector('[role="heading"], .M7eMe, .HoXoMd')?.textContent?.trim();
+      const rowHeader = container.querySelector('.freebirdFormviewerComponentsQuestionGridRowHeader, [role="rowheader"], td:first-child')?.textContent?.trim();
+      if (parentTitle && rowHeader) {
+        questionText = `${parentTitle} - ${rowHeader}`;
+      } else if (parentTitle) {
+        questionText = parentTitle;
+      }
+    }
+
     if (!questionText) return null;
 
     const lowerQ = questionText.toLowerCase();
     const looksLikeEssay = /\b(marks?|explain|describe|write|discuss|elaborate|detail|code)\b/.test(lowerQ);
 
+    // Date questions
+    const dateInput = container.querySelector('input[type="date"], input[aria-label*="Month" i], input[aria-label*="Day" i], input[aria-label*="Year" i]');
+    if (dateInput) {
+      return { questionText, questionType: 'date', options: [] };
+    }
+
+    // Time questions
+    const timeInput = container.querySelector('input[type="time"], input[aria-label*="Hour" i], input[aria-label*="Minute" i]');
+    if (timeInput) {
+      return { questionText, questionType: 'time', options: [] };
+    }
+
+    // Checkboxes
     const checkboxes = container.querySelectorAll('[role="checkbox"]');
     if (checkboxes.length > 0) {
       const options = [...checkboxes].map(c => getOptionLabel(c));
       return { questionText, questionType: 'checkbox', options };
     }
 
+    // Radio / linear scale
     const radios = container.querySelectorAll('[role="radio"]');
     if (radios.length > 0) {
       const labels = [...radios].map(r => getOptionLabel(r));
@@ -291,6 +320,7 @@
       return { questionText, questionType: 'radio', options: labels };
     }
 
+    // Dropdown
     const combobox = container.querySelector('[role="combobox"], [role="listbox"]');
     if (combobox) {
       const opts = [...container.querySelectorAll('[role="option"]')]
@@ -298,9 +328,11 @@
       return { questionText, questionType: 'dropdown', options: opts };
     }
 
+    // Paragraph (textarea)
     const textarea = container.querySelector('textarea');
     if (textarea) return { questionText, questionType: 'paragraph', options: [] };
 
+    // Short answer input
     const textInput = container.querySelector(
       'input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])'
     );
@@ -325,6 +357,14 @@
   async function fillAnswer(container, { questionType }, rawAnswer) {
     if (isAborted) return;
     switch (questionType) {
+      case 'date': {
+        await fillDate(container, rawAnswer.trim());
+        break;
+      }
+      case 'time': {
+        await fillTime(container, rawAnswer.trim());
+        break;
+      }
       case 'short_answer': {
         const input = container.querySelector(
           'input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])'
@@ -437,6 +477,60 @@
       desc.set.call(el, value);
     } else {
       el.value = value;
+    }
+  }
+
+  // ── Date & Time Fillers ───────────────────────────────────────────────────
+
+  async function fillDate(container, rawAnswer) {
+    const match = rawAnswer.match(/(\d{4})-(\d{1,2})-(\d{1,2})/) || rawAnswer.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    const dateInput = container.querySelector('input[type="date"]');
+    if (dateInput && match) {
+      const y = match[1].length === 4 ? match[1] : match[3];
+      const m = (match[1].length === 4 ? match[2] : match[1]).padStart(2, '0');
+      const d = (match[1].length === 4 ? match[3] : match[2]).padStart(2, '0');
+      setNativeValue(dateInput, `${y}-${m}-${d}`);
+      dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+      dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    const monthInput = container.querySelector('input[aria-label*="Month" i]');
+    const dayInput = container.querySelector('input[aria-label*="Day" i]');
+    const yearInput = container.querySelector('input[aria-label*="Year" i]');
+
+    if (monthInput && dayInput && yearInput && match) {
+      const y = match[1].length === 4 ? match[1] : match[3];
+      const m = match[1].length === 4 ? match[2] : match[1];
+      const d = match[1].length === 4 ? match[3] : match[2];
+
+      await typeInto(monthInput, m.padStart(2, '0'));
+      await typeInto(dayInput, d.padStart(2, '0'));
+      await typeInto(yearInput, y);
+    } else {
+      const firstInput = container.querySelector('input:not([type="hidden"])');
+      if (firstInput) await typeInto(firstInput, rawAnswer);
+    }
+  }
+
+  async function fillTime(container, rawAnswer) {
+    const match = rawAnswer.match(/(\d{1,2}):(\d{2})/);
+    const timeInput = container.querySelector('input[type="time"]');
+    if (timeInput && match) {
+      setNativeValue(timeInput, `${match[1].padStart(2, '0')}:${match[2]}`);
+      timeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      timeInput.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    const hourInput = container.querySelector('input[aria-label*="Hour" i]');
+    const minuteInput = container.querySelector('input[aria-label*="Minute" i]');
+    if (hourInput && minuteInput && match) {
+      await typeInto(hourInput, match[1].padStart(2, '0'));
+      await typeInto(minuteInput, match[2]);
+    } else {
+      const firstInput = container.querySelector('input:not([type="hidden"])');
+      if (firstInput) await typeInto(firstInput, rawAnswer);
     }
   }
 
